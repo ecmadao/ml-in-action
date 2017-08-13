@@ -1,8 +1,6 @@
 import math from 'mathjs';
-import data from './data';
 
 const LEARNING_RATE = 0.5; // 梯度下降时的学习速率
-// const { trainingSets } = data;
 const WEIGHTS = {}; // 储存各层神经元的权重
 const OUTPUTS = {}; // 储存各层神经元的输出
 
@@ -21,10 +19,8 @@ const random = () => {
 const randomWeights = (count) =>
   array(count).map(() => random());
 
+// 以逻辑回归中常用的 sigmoid 函数作为神经元的激活函数
 const sigmoid = (z) => 1 / (1 + Math.exp(-z));
-
-const reset = (matrix, position, val) =>
-  matrix.set(position, matrix.get(position) + val);
 
 /*
 * 随机计算某层各神经元针对上一层输入的权重，如
@@ -57,6 +53,11 @@ const deltaK = (outputs, targets) => {
   return math.map(val, (v, i) => v * derivative.get(i));
 };
 
+/*
+ * 正向传播，计算最终输出的预测值
+ * 用激活函数、上一层的输入、权重来计算该层的输出，
+ * 并储存在 OUTPUS 中以便在反向传播时使用
+ */
 const forward = (inputs) => {
   let net = math.matrix(inputs);
   let output = null;
@@ -69,6 +70,12 @@ const forward = (inputs) => {
   console.log(output.valueOf());
 };
 
+/*
+ * 反向传播
+ * 需要区分 “最后一个隐藏层 -> 输出层” 和 其他层
+ * 算出各层权重的误差以后，利用 LEARNING_RATE 来更新权重
+ * LEARNING_RATE 的大小决定了我们的学习速率，但过大则可能会导致梯度下降失败
+ */
 const backpropagation = (targets) => {
   const targetVals = math.matrix(targets);
   const weightKeys = Object.keys(WEIGHTS);
