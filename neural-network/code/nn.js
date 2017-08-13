@@ -1,26 +1,13 @@
 import math from 'mathjs';
+import randomWeights from '../../utils/random';
+import {
+  array,
+  sigmoid
+} from '../../utils/helper';
 
 const LEARNING_RATE = 0.5; // 梯度下降时的学习速率
 const WEIGHTS = {}; // 储存各层神经元的权重
 const OUTPUTS = {}; // 储存各层神经元的输出
-
-// 构造指定长度的数组
-const array = (length) => new Array(length).fill(0);
-
-// 随机生成一个大于 0 且小于 1 的权重
-const random = () => {
-  let val = 0;
-  while(!val) {
-    val = Math.random();
-  }
-  return Number(val.toFixed(2));
-};
-// 生成一组随机权重
-const randomWeights = (count) =>
-  array(count).map(() => random());
-
-// 以逻辑回归中常用的 sigmoid 函数作为神经元的激活函数
-const sigmoid = (z) => 1 / (1 + Math.exp(-z));
 
 /*
 * 随机计算某层各神经元针对上一层输入的权重，如
@@ -41,16 +28,19 @@ const getWeights = (inputCount, unitCount) => {
 
 // o * (1 - o)
 const derivativeOfSigmoid = (outputs) => {
+  // outputs 上的每一位元素都 -1
   const subtract = math.add(outputs, -1);
-  return math.map(outputs, (val, i) => -1 * val * subtract.get(i));
+  // 将两个矩阵 outputs 和 subtract 位置对于的元素相乘
+  return math.dotMultiply(math.multiply(-1, outputs), subtract);
 };
 
 // δk = (ok - tk) * ok * (1 - ok)
 const deltaK = (outputs, targets) => {
+  // 矩阵相减
   const val = math.subtract(outputs, targets);
-  const derivative = derivativeOfSigmoid(outputs);
 
-  return math.map(val, (v, i) => v * derivative.get(i));
+  const derivative = derivativeOfSigmoid(outputs);
+  return math.dotMultiply(val, derivative);
 };
 
 /*
@@ -67,6 +57,7 @@ const forward = (inputs) => {
     output = math.map(net, val => sigmoid(val));
     OUTPUTS[key] = output;
   });
+  console.log(' ============= forward result ============= ');
   console.log(output.valueOf());
 };
 
@@ -116,7 +107,7 @@ const train = (options = {}) => {
     // 输入为 [i1, i2, i3...]
     inputs = [],
     outputs = [],
-    // hiddenLayers 数组的长度代表隐藏层的层数，而具体的数组则改变该层的神经元数目
+    // hiddenLayers 数组的长度代表隐藏层的层数，而具体的数字则代表该层的神经元数目
     hiddenLayers = [2],
   } = options;
 
@@ -145,24 +136,24 @@ const train = (options = {}) => {
     }
   });
 
-  console.log(' ============= forward ============= ');
   forward(inputs);
 
   console.log('Working on backpropagation....');
   backpropagation(outputs);
 
-  console.log(' ============= forward ============= ');
+  // 瞅一瞅反向传播优化的结果
   forward(inputs);
 };
 
 /*
  * 在计算 10000 次以后，将会输出 [ 0.010764211878949714, 0.9902824176718917 ]
  * 这已经很接近我们的期望值了！
+ * (PS: 每次运行输出的结果都不一样，因为我们一开始是随机生成的权重)
  */
 for (let i = 0; i < 10000; i += 1) {
   train({
     inputs: [0.05, 0.1],
     outputs: [0.01, 0.99],
-    hiddenLayers: [3, 3],
+    hiddenLayers: [4, 4],
   });
 }
