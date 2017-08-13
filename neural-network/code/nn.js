@@ -1,30 +1,13 @@
 import math from 'mathjs';
-import randomWeights from '../../utils/random';
 import {
   array,
-  sigmoid
+  sigmoid,
+  getWeights,
 } from '../../utils/helper';
 
 const LEARNING_RATE = 0.5; // 梯度下降时的学习速率
 const WEIGHTS = {}; // 储存各层神经元的权重
 const OUTPUTS = {}; // 储存各层神经元的输出
-
-/*
-* 随机计算某层各神经元针对上一层输入的权重，如
-* [
-*   [w1, w2], // hidden unit1 weight
-*   [w3, w4], // hidden unit2 weight
-* ]
-* 并将该数组转换为矩阵
-*
-* inputCount: 该层接收的输入数目
-* unitCount: 该层的神经元数目
-*/
-const getWeights = (inputCount, unitCount) => {
-  const weights = array(inputCount)
-    .map((i) => randomWeights(unitCount));
-  return math.matrix(weights);
-};
 
 // o * (1 - o)
 const derivativeOfSigmoid = (outputs) => {
@@ -127,7 +110,10 @@ const train = (options = {}) => {
       const unitCount = i === hiddenLayers.length
         ? outputs.length
         : hiddenLayers[i];
-      const weights = getWeights(inputCount, unitCount);
+      const weights = getWeights({
+        inputCount,
+        unitCount
+      });
 
       // 看一下这一层的权重长什么样
       console.log(` ===== [weights of hidden layer ${i + 1}] ===== `);
