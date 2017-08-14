@@ -1,39 +1,50 @@
 import math from 'mathjs';
 import {
   array,
+  sigmoid,
   getWeights,
 } from '../../utils/helper';
 import loadData from '../../utils/data';
 
-// 数据源：Coursera Machine Learning 课程 ex1
-const data = loadData('linear1.txt');
-
-// 学习速率越大则算法越快，但过大则可能导致梯度下降无法收敛
-const LEARNING_RATE = 0.01;
+// 数据源：Coursera Machine Learning 课程 ex2
+const data = loadData('logistic1.txt');
+const LEARNING_RATE = 0.001;
 let WEIGHTS = null;
+
+// 预测函数，使用了 sigmoid 函数
+const hypothesis = inputs =>
+  math.map(math.multiply(inputs, WEIGHTS), val => sigmoid(val));
 
 // 预测值与实际值的偏差：h(x) - y
 const difference = (inputs, outputs) =>
   math.subtract(hypothesis(inputs), outputs);
 
-// 代价函数：J(θ) = (1 / 2m) * ∑(h(x) - y)^2
-const costFunc = (inputs, outputs) =>
-  math.add(
-    ...difference(inputs, outputs).valueOf().map(i => math.pow(i[0], 2))
-  ) / (2 * outputs.length);
+// 代价函数
+const costFunc = (inputs, outputs) => {
+  const h = hypothesis(inputs);
+  const y = math.matrix(outputs);
+  const yt = math.transpose(y);
 
-// 预测函数
-const hypothesis = inputs => math.multiply(inputs, WEIGHTS);
+  const a = math.multiply(yt, math.log(h));
+  const b = math.multiply(
+    math.add(math.multiply(yt, -1), 1),
+    math.log(math.add(math.multiply(h, -1), 1))
+  );
+
+  const totalCost = (-1 / outputs.length) * math.add(a, b).get([0, 0]);
+  return totalCost;
+};
 
 const gradientDescent = (inputs, outputs) => {
-  // 根据预测值求偏差
   const diff = difference(inputs, outputs);
-
   const offset = math.multiply(
     LEARNING_RATE / outputs.length,
     math.transpose(inputs),
     diff
   );
+  console.log(' ========== offset ========== ');
+  console.log(offset.valueOf());
+
   if (isNaN(offset.get([0, 0]))) {
     return false;
   }
@@ -43,23 +54,14 @@ const gradientDescent = (inputs, outputs) => {
   return WEIGHTS.valueOf();
 };
 
-/*
- * inputs 为多层嵌套数组，如
- * [
- *    [1, 2, 3, 4],
- *    [2, 3, 4, 2]
- * ]
- * 其中，每个数组代表一个训练集
- * 而 outputs 形如 [1, 2]
- * 其 index 与 inputs 对应的元素则代表输出：
- * [1, 2, 3, 4] ==> 输出 1
- * [2, 3, 4, 2] ==> 输出 2
- */
-const train = (options = {}) => {
+const train = (options) => {
   const {
-    outputs = [],
     inputs = [[]],
+    outputs = [],
+    weights = null
   } = options;
+
+  WEIGHTS = weights ? math.matrix(weights) : null;
 
   // 在每一组输入训练样本前补 1
   const filling = array(inputs.length, [1]);
@@ -72,24 +74,26 @@ const train = (options = {}) => {
    */
   if (!WEIGHTS) {
     WEIGHTS = getWeights({
-      min: 0,
-      max: 0,
       inputCount: inputVals[0].length
     });
     console.log(' ========== initial weights ========== ');
     console.log(WEIGHTS.valueOf());
   }
 
-  for (let i = 0; i < 10000; i += 1) {
+  for (let i = 0; i < 100; i += 1) {
+    console.log(' ========== cost ========== ');
+    const cost = costFunc(inputVals, outputVals);
+    if (isNaN(cost)) break;
+    console.log(cost);
     console.log('gradientDescent...........');
     const result = gradientDescent(inputVals, outputVals);
     if (!result) break;
-    console.log(' ========== cost ========== ');
-    const cost = costFunc(inputVals, outputVals);
-    console.log(cost);
   }
 };
 
 train({
-  ...data
+  ...data,
+  weights: [
+    [-24], [0.2], [0.2]
+  ]
 });

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const loadData = (filename) => {
-  const filepath = path.join(__dirname, `../../data/${filename}`);
+  const filepath = path.join(__dirname, `../data/${filename}`);
   const filelines = fs
     .readFileSync(filepath, 'utf8').split(/\n|\r/);
 
@@ -11,13 +11,15 @@ const loadData = (filename) => {
 
   filelines.filter(item => item).forEach((fileline) => {
     const items = fileline.split(',');
-    inputs.push(items.slice(0, -1));
-    outputs.push(items.slice(-1)[0]);
+    inputs.push(
+      items.slice(0, -1).map(i => Number(i))
+    );
+    outputs.push(Number(items.slice(-1)[0]));
   });
 
   return {
     inputs,
-    outputs
+    outputs,
   };
 };
 

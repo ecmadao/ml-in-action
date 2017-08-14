@@ -10,8 +10,8 @@ export const sigmoid = z => 1 / (1 + Math.exp(-z));
 /*
 * 随机计算某层各神经元针对上一层输入的权重，如
 * [
-*   [w1, w2], // hidden unit1 weight
-*   [w3, w4], // hidden unit2 weight
+*   [w1, w2],
+*   [w3, w4],
 * ]
 * 并将该数组转换为矩阵
 *
