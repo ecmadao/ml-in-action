@@ -3,21 +3,27 @@ import {
   array,
   getWeights,
 } from '../../utils/helper';
+import loadData from './data';
 
-const LEARNING_RATE = 0.03;
+// 数据源：Coursera Machine Learning 课程 ex1
+const data = loadData('ex1data1.txt');
+
+// 学习速率越大则算法越快，但过大则可能导致梯度下降无法收敛
+const LEARNING_RATE = 0.01;
 let WEIGHTS = null;
 
-// 预测值与实际值的偏差
+// 预测值与实际值的偏差：h(x) - y
 const difference = (inputs, outputs) =>
   math.subtract(hypothesis(inputs), outputs);
 
+// 代价函数：J(θ) = (1 / 2m) * ∑(h(x) - y)^2
 const costFunc = (inputs, outputs) =>
   math.add(
     ...difference(inputs, outputs).valueOf().map(i => math.pow(i[0], 2))
   ) / (2 * outputs.length);
 
 // 预测函数
-const hypothesis = (inputs) => math.multiply(inputs, WEIGHTS);
+const hypothesis = inputs => math.multiply(inputs, WEIGHTS);
 
 const gradientDescent = (inputs, outputs) => {
   // 根据预测值求偏差
@@ -28,9 +34,13 @@ const gradientDescent = (inputs, outputs) => {
     math.transpose(inputs),
     diff
   );
+  if (isNaN(offset.get([0, 0]))) {
+    return false;
+  }
   WEIGHTS = math.subtract(WEIGHTS, offset);
   console.log(' ============= WEIGHTS ============= ');
   console.log(WEIGHTS.valueOf());
+  return WEIGHTS.valueOf();
 };
 
 /*
@@ -52,7 +62,7 @@ const train = (options = {}) => {
   } = options;
 
   // 在每一组输入训练样本前补 1
-  const filling = array(inputs.length).map(i => [1]);
+  const filling = array(inputs.length, [1]);
   const inputVals = math.concat(filling, inputs);
   const outputVals = math.transpose([outputs]);
 
@@ -66,38 +76,20 @@ const train = (options = {}) => {
       max: 0,
       inputCount: inputVals[0].length
     });
-    console.log(' ========== initial weights ========== ')
+    console.log(' ========== initial weights ========== ');
     console.log(WEIGHTS.valueOf());
   }
 
   for (let i = 0; i < 10000; i += 1) {
     console.log('gradientDescent...........');
-    gradientDescent(inputVals, outputVals);
+    const result = gradientDescent(inputVals, outputVals);
+    if (!result) break;
     console.log(' ========== cost ========== ');
-    const cost = costFunc(inputVals, outputVals)
+    const cost = costFunc(inputVals, outputVals);
     console.log(cost);
   }
 };
 
 train({
-  inputs: [
-    [6.1101],
-    [5.5277],
-    [8.5186],
-    [7.0032],
-    [5.8598],
-    [8.3829],
-    [7.4764],
-    [8.5781]
-  ],
-  outputs: [
-    17.592,
-    9.1302,
-    13.662,
-    11.854,
-    6.8233,
-    11.886,
-    4.3483,
-    12
-  ]
+  ...data
 });

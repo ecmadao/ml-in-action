@@ -5,7 +5,7 @@ import randomWeights from './random';
 export const array = (length, val = 0) => new Array(length).fill(val);
 
 // 以逻辑回归中常用的 sigmoid 函数作为神经元的激活函数
-export const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+export const sigmoid = z => 1 / (1 + Math.exp(-z));
 
 /*
 * 随机计算某层各神经元针对上一层输入的权重，如
@@ -28,7 +28,9 @@ export const getWeights = (options) => {
     inputCount,
     unitCount = 1,
   } = options;
-  const weights = array(inputCount)
-    .map((i) => randomWeights(unitCount, min, max));
+  const weights = array(
+    inputCount,
+    randomWeights(unitCount, min, max)
+  );
   return math.matrix(weights);
 };
