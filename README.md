@@ -74,3 +74,7 @@ math.dotMultiply(a, b); // => [[27, 10], [30, 2]]
 // 矩阵相乘
 math.multiply(a, b); // => [[52, 28], [23, 14]]
 ```
+
+### Recommended
+
+- [数据的游戏：冰与火](http://coolshell.cn/articles/10192.html)
