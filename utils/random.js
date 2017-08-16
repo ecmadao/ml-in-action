@@ -2,8 +2,8 @@ import { array } from './helper';
 
 const roll = (min, max) => (Math.random() * (max - min)) + min;
 
-// 随机生成权重
-const random = (min = 0, max = 1) => {
+// 随机生成权重 [min, max)
+export const random = (min = 0, max = 1) => {
   let val = 0;
   if (min === max) return min;
   if (max <= 0) return roll(min, max);
