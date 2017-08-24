@@ -2,9 +2,13 @@
   "name": "ml",
   "version": "1.0.0",
   "description": "machine learning in action",
-  "main": "index.js",
+  "main": "neural-network/code/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "nn": "node neural-network/code/index.js",
+    "knn": "node knn/code/index.js",
+    "km": "node k-means/code/index.js",
+    "linear": "node linear-regression/code/index.js",
+    "logistic": "node logistic-regression/code/index.js"
   },
   "repository": {
     "type": "git",

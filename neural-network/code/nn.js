@@ -32,7 +32,7 @@ const deltaK = (outputs, targets) => {
  * 并储存在 OUTPUS 中以便在反向传播时使用
  */
 const forward = (inputs) => {
-  let net = math.matrix(inputs);
+  let net = inputs;
   let output = null;
   Object.keys(WEIGHTS).forEach((key) => {
     const weights = WEIGHTS[key];
@@ -42,6 +42,7 @@ const forward = (inputs) => {
   });
   console.log(' ============= forward result ============= ');
   console.log(output.valueOf());
+  return output.valueOf();
 };
 
 /*
@@ -55,46 +56,66 @@ const backpropagation = (targets) => {
   const weightKeys = Object.keys(WEIGHTS);
   const lastWeights = WEIGHTS[weightKeys.slice(-1)[0]];
   const lastOutputs = OUTPUTS[weightKeys.slice(-1)[0]];
+  const dataGroupCount = targets.length;
 
   const delta = deltaK(lastOutputs, targetVals);
 
-  weightKeys.reverse().forEach((key, i) => {
-    const outputs = OUTPUTS[key];
-    const weights = WEIGHTS[key];
-    const outputsPre = OUTPUTS[Number(key) - 1];
+  for (let i = weightKeys.length - 1; i >= 0; i -= 1) {
+    const key = weightKeys[i];
     let values = null;
+    const outputsPre = OUTPUTS[Number(key) - 1];
+    const weights = WEIGHTS[key];
 
-    if (i === 0) {
+    if (i === weightKeys.length - 1) {
       values = delta;
     } else {
+      const outputs = OUTPUTS[key];
       const derivative = derivativeOfSigmoid(outputs);
-      const sumErrorOfOutputLayer = math.add(
-        ...lastWeights.valueOf().map(weight => math.multiply(weight, delta))
+
+      const multiply = math.multiply(lastWeights, math.transpose(delta));
+      const matrixToSum = math.matrix([
+        new Array(multiply.size()[0]).fill(1)
+      ]);
+      const sumErrorOfOutputLayer = math.multiply(
+        matrixToSum,
+        multiply
       );
-      values = math.multiply(sumErrorOfOutputLayer, derivative);
+
+      values = derivative.valueOf().map(
+        (row, index) => math.multiply(sumErrorOfOutputLayer.get([0, index]), row)
+      );
     }
 
-    const offsets = math.multiply(
-      math.transpose(math.matrix([outputsPre.valueOf()])),
-      math.matrix([values.valueOf()])
+    const offsets = math.divide(
+      math.multiply(
+        math.transpose(outputsPre),
+        values
+      ),
+      dataGroupCount
     );
     WEIGHTS[key] = math.subtract(
       weights,
       math.multiply(offsets, LEARNING_RATE)
     );
-  });
+  }
 };
 
 const train = (options = {}) => {
   const {
-    // 输入为 [i1, i2, i3...]
-    inputs = [],
-    outputs = [],
+    // 输入为 [dataGroup1, dataGroup2...]
+    inputs = [
+      // data group
+      [] // [feature1, feature2...]
+    ],
+    outputs = [
+      []
+    ],
     // hiddenLayers 数组的长度代表隐藏层的层数，而具体的数字则代表该层的神经元数目
     hiddenLayers = [2],
   } = options;
 
-  OUTPUTS['0'] = math.matrix(inputs); // inputs 本质上是第一层的输出
+  const matrixInputs = math.matrix(inputs);
+  OUTPUTS['0'] = matrixInputs; // inputs 本质上是第一层的输出
 
   // 初始化全部神经元的权重
   array(hiddenLayers.length + 1).forEach((v, i) => {
@@ -103,12 +124,12 @@ const train = (options = {}) => {
       // 计算上一层向当前第 i 层输入的个数。
       // 当 i = 0 时，输入个数即为训练集的 inputs 个数；否则为上一层隐藏神经元的个数
       const inputCount = i === 0
-        ? inputs.length
+        ? inputs[0].length
         : hiddenLayers[i - 1];
 
       // 计算第 i 层神经元的个数。在最后一层隐藏层的时候，输出个数为最终 output 的数目
       const unitCount = i === hiddenLayers.length
-        ? outputs.length
+        ? outputs[0].length
         : hiddenLayers[i];
       const weights = getWeights({
         inputCount,
@@ -122,24 +143,32 @@ const train = (options = {}) => {
     }
   });
 
-  forward(inputs);
+  forward(matrixInputs);
 
   console.log('Working on backpropagation....');
   backpropagation(outputs);
 
   // 瞅一瞅反向传播优化的结果
-  forward(inputs);
+  forward(matrixInputs);
 };
 
 /*
- * 在计算 10000 次以后，将会输出 [ 0.010764211878949714, 0.9902824176718917 ]
- * 这已经很接近我们的期望值了！
+ * 在计算 10000 次以后，将会输出很接近我们的期望值的结果
  * (PS: 每次运行输出的结果都不一样，因为我们一开始是随机生成的权重)
  */
 for (let i = 0; i < 10000; i += 1) {
   train({
-    inputs: [0.05, 0.1],
-    outputs: [0.01, 0.99],
+    inputs: [
+      // [feature1, feature2]
+      [0.05, 0.1], // dataGroup1
+      [0.03, 0.08], // dataGroup2
+      [0.06, 0.11] // dataGroup3
+    ],
+    outputs: [
+      [0.01, 0.99], // output1
+      [0.01, 0.98], // output2
+      [0.011, 0.998] // output3
+    ],
     hiddenLayers: [4, 4],
   });
 }
