@@ -10,10 +10,40 @@ const data = loadData('knn.txt', {
 // vector = [1, 2, 3, 4, 5]
 const vectorLength = vector => math.sqrt(math.add(...math.dotPow(vector, 2)));
 
+/*
+ * 两向量上各个对应位置上的数值相减，
+ * 然后除以对应位置上元素的取值范围（归一化）
+ * 最后求它到原点距离，即可看做是这两个向量的距离
+ *
+ * normalized = (每个位置上的值 - 该位置上的最小值) / (该位置上的最大值 - 该位置上的最小值)
+*/
 const similarity = ranges => (input, target) => {
+  const {
+    min,
+    max,
+  } = ranges;
   const rawDiff = math.subtract(input, target);
-  const diff = math.dotDivide(rawDiff, ranges);
-  return vectorLength(diff);
+  const normalized = math.dotDivide(math.subtract(rawDiff, min), math.subtract(max, min));
+  return vectorLength(normalized);
+};
+
+const getRanges = (inputs) => {
+  const transpose = math.transpose(inputs);
+  // 获得各种值的取值范围
+  const min = [];
+  const max = [];
+  transpose.forEach((values) => {
+    min.push(
+      Math.min(...values)
+    );
+    max.push(
+      Math.max(...values)
+    );
+  });
+  return {
+    min,
+    max,
+  };
 };
 
 const train = (options = {}) => {
@@ -26,9 +56,7 @@ const train = (options = {}) => {
     outputs = [],
   } = options;
 
-  const transpose = math.transpose(inputs);
-  // 获得各种值的取值范围
-  const ranges = transpose.map(values => Math.max(...values));
+  const ranges = getRanges(inputs);
   const distance = similarity(ranges);
 
   const distances = inputs
